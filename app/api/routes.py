@@ -8,8 +8,7 @@ api = Blueprint('api',__name__)
 
 @api.route('/')
 def home():
-    results = mongo.db.list_collection_names()
-    restaurants = mongo.db.restaurants.count_documents({"borough":"Manhattan"})
+    results = mongo.hub.list_collection_names()
 
     return(jsonify(status = 'connected', collections=results,Manhattan=restaurants))
 

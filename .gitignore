@@ -1,5 +1,4 @@
 .vscode
 .ipynb_chekpoints
 apienv
-dbenv
 __pycache__
