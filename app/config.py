@@ -6,6 +6,5 @@ class Config():
     # SECRET_KEY = environ.get("SECRET_KEY")
     DEBUG = environ.get("DEBUG")
     ENV = environ.get("FLASK_ENV")
-    SERVER_NAME = environ.get("SERVER_NAME")
-
-    
+    # SERVER_NAME = environ.get("SERVER_NAME")
+    MONGO_URI = environ.get("MONGO_URI")

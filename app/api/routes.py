@@ -1,16 +1,17 @@
-from flask import (render_template,
-                    url_for, 
-                    redirect,
-                    Blueprint,
+import collections
+from flask import (Blueprint,
                     request,
                     jsonify)
-
+from app import mongo
 
 api = Blueprint('api',__name__)
 
 @api.route('/')
 def home():
-    return(render_template('api.html'))
+    results = mongo.db.list_collection_names()
+    restaurants = mongo.db.restaurants.count_documents({"borough":"Manhattan"})
+
+    return(jsonify(status = 'connected', collections=results,Manhattan=restaurants))
 
 @api.route('/filter', methods=['GET'])
 def api_filter():
