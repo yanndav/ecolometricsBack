@@ -4,8 +4,7 @@ from flask import (Blueprint,
                     request,
                     jsonify)
 from app import mongo
-import json
-from bson import json_util
+import re
 
 api = Blueprint('api',__name__)
 
@@ -30,15 +29,16 @@ def api_filter():
     search = {}
     if 'variable' in query_parameters.keys():
         var = query_parameters['variable']
-        search['variable'] = {"$gte":var}
+        var_re = re.compile(var, re.IGNORECASE)
+        search['variable'] = var_re
     
     if 'location' in query_parameters.keys():
         loc = query_parameters['location']
-        search['location'] = {"$gte":loc}
+        loc_re = re.compile(loc, re.IGNORECASE)
+        search['location'] = loc_re
 
     results = list(mongo.db[col].find(search, dim))
-    return json.dumps(results, default=json_util.default)
-    # return jsonify(search)
+    return jsonify(results)
 
 @api.route('/getVariable', methods=['GET'])
 def api_variables():
