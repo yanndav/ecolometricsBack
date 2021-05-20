@@ -2,9 +2,12 @@ import collections
 from dns.rdatatype import NULL
 from flask import (Blueprint,
                     request,
-                    jsonify)
-from app import mongo
+                    jsonify,
+                    abort)
+from app import mongo, mail
 import re
+from datetime import datetime
+from flask_mail import Message
 
 api = Blueprint('api',__name__)
 
@@ -40,8 +43,43 @@ def api_filter():
     results = list(mongo.db[col].find(search, dim))
     return jsonify(results)
 
-@api.route('/getVariable', methods=['GET'])
-def api_variables():
-    # Retrieving user's request
-    query_parameters = request.args.to_dict()
+@api.route('/earlyAccess', methods=['POST'])
+def get_mail():
+    if not request.json or not 'email' in request.json:
+        return(jsonify(status="Please send email in valid format"),400)
+
+    
+    # Initialisation early_access db
+    earlyAccess = mongo.db['early_access']
+    # Date of access
+    date = datetime.now()
+    # Email
+    email = request.json['email']
+
+    # Searching for email existence in DB
+    exists = earlyAccess.find_one({'email':email})
+
+    if exists:
+        return(jsonify(status="Already registered"),401)
+    
+    else:
+        # Creating the document
+        new_doc = {
+            'email':email,
+            'date':date}
+
+        # Adding doc to dataset
+        earlyAccess.insert_one(new_doc)
+    
+        msg = Message(
+            subject='[Ecolometrics] Thank you for your interest!',
+            recipients=[email],
+            sender=('Ecolometrics','ecolometricsapp@gmail.com'),
+            body='Hi,\n\nWe successfully added your email to our database and will keep in touch to inform you about the first release.\n\nBest,\nDavid Bros.'
+        )
+
+        mail.send(msg)
+
+    return(jsonify(status="Succesfully added"),201)
+
 
