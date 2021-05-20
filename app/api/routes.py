@@ -3,11 +3,13 @@ from dns.rdatatype import NULL
 from flask import (Blueprint,
                     request,
                     jsonify,
-                    abort)
+                    abort,
+                    render_template)
 from app import mongo, mail
 import re
 from datetime import datetime
 from flask_mail import Message
+from app.api.functions import checkEmail
 
 api = Blueprint('api',__name__)
 
@@ -46,15 +48,19 @@ def api_filter():
 @api.route('/earlyAccess', methods=['POST'])
 def get_mail():
     if not request.json or not 'email' in request.json:
-        return(jsonify(status="Please send email in valid format"),400)
-
+        return(jsonify(status="Please send valid json post format"),400)
     
+    email = request.json['email']
+
+    if not checkEmail(email):
+        return(jsonify(status="Email format not valid"),400)
+
     # Initialisation early_access db
     earlyAccess = mongo.db['early_access']
     # Date of access
     date = datetime.now()
     # Email
-    email = request.json['email']
+    
 
     # Searching for email existence in DB
     exists = earlyAccess.find_one({'email':email})
@@ -72,11 +78,13 @@ def get_mail():
         earlyAccess.insert_one(new_doc)
     
         msg = Message(
-            subject='[Ecolometrics] Thank you for your interest!',
+            subject='[Accès anticipé] Ecolometrics ✅',
             recipients=[email],
             sender=('Ecolometrics','ecolometricsapp@gmail.com'),
-            body='Hi,\n\nWe successfully added your email to our database and will keep in touch to inform you about the first release.\n\nBest,\nDavid Bros.'
-        )
+            body=render_template("mail/earlyAccess.txt"),
+            html=render_template("mail/earlyAccess.html")
+            )
+            
 
         mail.send(msg)
 
