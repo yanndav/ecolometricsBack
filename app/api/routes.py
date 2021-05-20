@@ -47,10 +47,10 @@ def api_filter():
 
 @api.route('/earlyAccess', methods=['POST'])
 def get_mail():
-    if not request.json or not 'email' in request.json:
+    if not request.args or not 'email' in request.args:
         return(jsonify(status="Please send valid json post format"),400)
     
-    email = request.json['email']
+    email = request.args['email']
 
     if not checkEmail(email):
         return(jsonify(status="Email format not valid"),400)
