@@ -8,7 +8,7 @@ from flask_cors import CORS
 # Configuration
 mongo = PyMongo()
 mail = Mail()
-cors =CORS(resources='/getData/*')
+cors =CORS(resources='/earlyAccess*')
 
 def create_app(config_class=Config):
     app = Flask(__name__)
