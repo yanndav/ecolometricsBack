@@ -96,13 +96,13 @@ def api_filter():
 @api.route('/earlyAccess', methods=['POST'])
 def get_mail():
     if not request.args or not 'email' in request.args:
-        return(jsonify(status="Please send valid args post format"),400)
+        return(jsonify(status="Le format d'envoi des données n'est pas valide"),400)
     
     # Email
     email = request.args['email']
 
     if not checkEmail(email):
-        return(jsonify(status="Email format not valid"),400)
+        return(jsonify(status="Le format d'email n'est pas valide"),400)
 
     # Initialisation early_access db
     earlyAccess = mongo.db['early_access']
@@ -115,7 +115,7 @@ def get_mail():
     exists = earlyAccess.find_one({'email':email})
 
     if exists:
-        return(jsonify(status="Already registered"),401)
+        return(jsonify(status="Vous êtes déjà enregistré"),401)
     
     else:
         # Creating the document
@@ -137,6 +137,6 @@ def get_mail():
 
         mail.send(msg)
 
-    return(jsonify(status="Succesfully added"),201)
+    return(jsonify(status="Merci de votre intérêt!🌱"),201)
 
 
