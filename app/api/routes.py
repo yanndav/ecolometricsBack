@@ -10,6 +10,7 @@ import re
 from datetime import datetime
 from flask_mail import Message
 from app.api.functions import checkEmail
+from app.api.functions import oecdAPI as oecd
 
 api = Blueprint('api',__name__)
 
@@ -19,37 +20,85 @@ def home():
 
     return(jsonify(status = 'connected_to_api', collections=results))
 
+@api.route('/getDim', methods=['GET'])
+def api_dimensions():
+    # Retrieving user's request
+    query_parameters = request.args.to_dict()
+
+    # Dimensions:
+    dim = {
+        '_id':0,
+        "location.name":1,
+        "variable.name":1,
+        "source":1,
+        "category":1}
+
+    search = {}
+    if 'source' in query_parameters.keys():
+        src = query_parameters['source']
+        src_re = re.compile(src, re.IGNORECASE)
+        search['source'] = src_re
+
+    if 'variable' in query_parameters.keys():
+        var = query_parameters['variable']
+        var_re = re.compile(var, re.IGNORECASE)
+        search['variable.name']=var_re
+    
+    if 'location' in query_parameters.keys():
+        loc = query_parameters['location']
+        loc_re = re.compile(loc, re.IGNORECASE)
+        search['location.name'] = loc_re
+
+    if 'category' in query_parameters.keys():
+        cat = query_parameters['category']
+        cat_re = re.compile(cat, re.IGNORECASE)
+        search['category'] = cat_re
+
+    results = list(mongo.db["structure"].find(search, dim))
+    return(jsonify(results))
+
 @api.route('/getData', methods=['GET'])
 def api_filter():
     # Retrieving user's request
     query_parameters = request.args.to_dict()
 
-    # Dimensions:
-    dim = {'variable':1,'location':1,'values':1,'_id':0}
-
     # Getting user's request parameters
-    # Collection 
-    col = query_parameters['collection']
-    # If searching for variable
     search = {}
+    dim = {
+        '_id':0
+    }
     if 'variable' in query_parameters.keys():
         var = query_parameters['variable']
         var_re = re.compile(var, re.IGNORECASE)
-        search['variable'] = var_re
+        search['variable.name']=var_re
     
     if 'location' in query_parameters.keys():
         loc = query_parameters['location']
         loc_re = re.compile(loc, re.IGNORECASE)
-        search['location'] = loc_re
+        search['location.name'] = loc_re
+    
+    results = list(mongo.db["structure"].find(search,dim).limit(1))[0]
 
-    results = list(mongo.db[col].find(search, dim))
-    return jsonify(results)
+    if results['source']=="OECD":
+        data = oecd.oecdOutput(
+            results['dataSet'],
+            results['variable'],
+            results['location']
+        )
+        return(jsonify(data))
+
+    else:
+        return "Error"
+    
+    # return(jsonify(results))
+    
 
 @api.route('/earlyAccess', methods=['POST'])
 def get_mail():
     if not request.args or not 'email' in request.args:
         return(jsonify(status="Please send valid args post format"),400)
     
+    # Email
     email = request.args['email']
 
     if not checkEmail(email):
@@ -59,7 +108,7 @@ def get_mail():
     earlyAccess = mongo.db['early_access']
     # Date of access
     date = datetime.now()
-    # Email
+    
     
 
     # Searching for email existence in DB
